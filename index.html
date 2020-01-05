@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Google sheet</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <style>
+        #loader {
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid blue;
+            border-bottom: 16px solid blue;
+            width: 60px;
+            height: 60px;
+            -webkit-animation: spin 2s linear infinite;
+            animation: spin 2s linear infinite;
+            visibility: hidden;
+        }
+        
+        @-webkit-keyframes spin {
+            0% {
+                -webkit-transform: rotate(0deg);
+            }
+            100% {
+                -webkit-transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <script>
+        var script_url =
+            "https://script.google.com/macros/s/AKfycbxeZMEexPCTE3v0NuOYheZsDb7PHfN5HVbX1KOPHjls/dev";
+        // Make an AJAX call to Google Script
+        function insert_value() {
+            var val = $("#email").val();
+            if (val == "" || val == undefined) {
+                alert("Empty Email Id");
+                return;
+            }
+            document.getElementById("loader").style.visibility = "visible";
+            $('#mySpinner').addClass('spinner');
+
+            var url = script_url + "?email=" + val + "&action=insert";
+
+            var request = jQuery.ajax({
+                crossDomain: true,
+                url: url,
+                method: "GET",
+                dataType: "jsonp",
+                headers: {
+                    'Access-Control-Allow-Credentials': true,
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET',
+                    'Access-Control-Allow-Headers': 'application/json',
+                },
+                success: function(data) {
+                    document.getElementById("loader").style.visibility = "hidden";
+                    console.log(data);
+                },
+                error: function(error) {
+                    document.getElementById("loader").style.visibility = "hidden";
+                    console.log("FAIL.." + error);
+                }
+
+            });
+
+        }
+    </script>
+
+</head>
+
+<body>
+    <div id="loader">
+    </div>
+    Email : <input type="email" id="email" name="email" />
+    <button onclick="insert_value();"> Save</button>
+</body>
+<script>
+    function google() {
+        function doGet(e) {
+            var op = e.parameter.action;
+            var
+                ss = SpreadsheetApp.openByUrl('https://docs.google.com/spreadsheets/d/1aJnGj6c5CF9Kk6btsM9uAelxIyl68xdbrdLWKCAXF5c/edit?usp=sharing');
+            console.log(ss);
+            var sheet = ss.getSheetByName("Sheet1");
+            console.log(sheet);
+            if (op == "insert")
+                return insert_value(e, sheet);
+        }
+
+
+        function insert_value(request, sheet) {
+            var eId = request.parameter.email;
+            var flag = 1;
+            var lr = sheet.getLastRow();
+            for (var i = 1; i <= lr; i++) {
+                var id1 = sheet.getRange(i, 2).getValue();
+                if (id1 == eId) {
+                    flag = 0;
+                    var
+                        result = "Id already exist..";
+                }
+            } //add new row with recieved parameter from client if(flag==1){ var d=new
+            Date();
+            var currentTime = d.toLocaleString();
+            var rowData = sheet.appendRow([currentTime, eId]);
+            var
+                result = "Insertion successful";
+        }
+        result = JSON.stringify({
+            "result": result
+        });
+        return
+        ContentService.createTextOutput("(" + result + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+</script>
+
+</html>
